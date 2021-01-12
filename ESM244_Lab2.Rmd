@@ -1,0 +1,68 @@
+---
+title: "ESM244 Lab 2"
+author: "Allison Hacker"
+date: "1/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(janitor)
+library(plotly)
+library(readxl)
+library(ggfortify)
+library(gghighlight)
+library(lubridate)
+library(patchwork)
+library(palmerpenguins)
+
+```
+
+### Part 1: PCA with penguins
+
+```{r}
+penguin_pca <- penguins %>%
+  select(body_mass_g, ends_with("_mm")) %>% 
+  drop_na() %>% 
+  scale() %>% 
+  prcomp()
+
+penguin_pca$rotation
+
+# dataframe to use for aesthetics must match pca completely
+penguin_complete <- penguins %>% 
+  drop_na(body_mass_g, ends_with("_mm"))
+
+autoplot(penguin_pca,
+         data = penguin_complete,
+         colour = 'species',
+         loadings = TRUE,
+         loadings.label = TRUE)+
+  theme_minimal()
+```
+
+### Part 2: ggplot2 customization and reading in different file types
+
+#### Read in .xlsx file and do some wrangling
+```{r}
+fish_noaa <- read_excel(here("data","foss_landings.xlsx")) %>% 
+  clean_names() %>%
+  mutate(across(where(is.character), tolower)) %>% 
+  mutate(nmfs_name = str_sub(nmfs_name, end = -4)) %>% 
+  filter(confidentiality == "public")
+```
+
+Make a customized interactive plot
+```{r}
+fish_plot <- ggplot(data = fish_noaa, aes(x = year, y = pounds))+
+  geom_line(aes(color = nmfs_name))+
+  theme_minimal()
+
+fish_plot
+
+ggplotly(fish_plot)
+```
+
